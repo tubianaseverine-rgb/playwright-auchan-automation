@@ -50,6 +50,9 @@ export class AccueilPage {
     
     // Zone du panier qui contient le prix (ex: 5,99€) et/ou la pastille de quantité
     this.zonePanier = page.locator('.header-cart, .context-header__cart, #mini-cart');
+
+   /* // On cherche le lien qui mène au panier, c'est universel sur Auchan
+    this.zonePanier = page.locator('a[href*="/cart/"], .header-cart');*/
   }
 
   /** Navigue vers le site Auchan */
