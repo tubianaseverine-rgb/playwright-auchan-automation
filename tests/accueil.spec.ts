@@ -1,32 +1,30 @@
 import { test, expect } from '@playwright/test';
 import { AccueilPage } from '../pages/AccueilPage';
 
-test.describe('Tests tunnel d\'achat Auchan', () => {
+test.describe('Tunnel d\'achat Auchan', () => {
 
-  test('Recherche de produit après sélection du Drive Cambrai', async ({ page }) => {
+  test('Ajout au panier du Lait Bio à Cambrai', async ({ page }) => {
     const accueilPage = new AccueilPage(page);
 
-    // 1. Initialisation : Navigation et Cookies
     await accueilPage.goto();
     await accueilPage.accepterCookies();
-
-    // 2. Sélection du mode de retrait
     await accueilPage.choisirTypeCourse();
-    
-    // On enchaîne la saisie et la validation du magasin
-    await accueilPage.remplirCodePostalVille('Cambrai');
+    await accueilPage.remplirCodePostalVille('59400');
     await accueilPage.sélectionnerAuchanDriveCambrai();
 
-    // 3. Recherche produit
     await accueilPage.rechercherUnProduit('lait');
 
-    // 4. Assertion Finale : Vérifier que l'URL a changé ou qu'un titre de rayon est présent
-    // Cela confirme que le clic sur la suggestion a bien fonctionné
-    await expect(page).toHaveURL(/.*keywords=lait/i);
-    // Ou vérifier le titre de la page de résultats
-    await expect(page.locator('h1')).toContainText(/Lait/i);
+    // Ajout du produit BIO spécifique
+    await accueilPage.ajouterAuPanierSpecifiqueBio();
 
+    // --- ASSERTION FINALE BASÉE SUR LE PRIX ---
+    // On attend que le montant ne soit plus de 0,00€
+    // C'est la preuve que le panier a été mis à jour
+    await expect(accueilPage.zonePanier).not.toContainText(/0,00/, { timeout: 20000 });
 
+    // Petit log de confirmation avec le montant final trouvé
+    const montantFinal = await accueilPage.zonePanier.innerText();
+    console.log(`✅ Test validé ! Panier mis à jour : ${montantFinal.trim()}`);
   });
 
 });

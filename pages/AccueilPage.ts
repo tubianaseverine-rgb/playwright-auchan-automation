@@ -7,10 +7,10 @@ export class AccueilPage {
   readonly titremodaleChoisirLivraisonDrive: Locator;
   readonly champSaisieCP: Locator;
   readonly boutonAuchanDriveCambrai: Locator;
-  readonly texteVosCourses: Locator;
-  readonly texteAuchanDrive: Locator;
+  readonly contexteHeaderDrive: Locator;
   readonly inputRechercherProduit: Locator;
   readonly rechercheSugestionCategorie: Locator;
+  readonly zonePanier: Locator;
 
   constructor(page: Page) {
     this.page = page;
@@ -18,18 +18,17 @@ export class AccueilPage {
     this.boutonTypeCourse = page.getByRole('button', { name: 'Faire mes courses en drive ou en livraison' });
     this.titremodaleChoisirLivraisonDrive = page.getByText(/Choisir un drive ou la livraison/i);
     this.champSaisieCP = page.getByPlaceholder(/Code postal, ville/i);
-    this.texteVosCourses = page.getByText(/C'est noté ! Vos courses/i);
-    this.texteAuchanDrive = page.getByRole('button', { name: /Drive Auchan Drive Cambrai/i });
     
-    // Correction : Ajout du point-virgule manquant et sélecteur searchbox
-    this.inputRechercherProduit = page.getByRole('searchbox', { name: 'Rechercher un produit...' });
-    
-    // Optimisation : On cible le lien (parent) pour s'assurer que le clic est bien intercepté
-    this.rechercheSugestionCategorie = page.getByRole('link').filter({ hasText: 'Lait demi-écrémé' }).first();
-
     this.boutonAuchanDriveCambrai = page.locator('button')
       .filter({ hasText: /^Choisir$/ })
       .and(page.locator('[aria-label*="Cambrai"]'));
+    
+    this.contexteHeaderDrive = page.locator('span.context-header__pos');
+    this.inputRechercherProduit = page.getByRole('searchbox', { name: 'Rechercher un produit...' });
+    this.rechercheSugestionCategorie = page.getByRole('link').filter({ hasText: 'Lait demi-écrémé' }).first();
+    
+    // On cible la zone du panier qui contient le prix et la quantité
+    this.zonePanier = page.locator('.header-cart, .context-header__cart, #mini-cart');
   }
 
   async goto() {
@@ -50,33 +49,51 @@ export class AccueilPage {
 
   async remplirCodePostalVille(cp: string) {
     await this.champSaisieCP.waitFor({ state: 'visible' });
-    await this.champSaisieCP.fill(cp);
-    // Note : Si la suggestion n'apparaît pas, repasse sur pressSequentially(cp, { delay: 100 })
+    await this.champSaisieCP.click();
+    await this.page.keyboard.press('Control+A');
+    await this.page.keyboard.press('Backspace');
+    await this.champSaisieCP.pressSequentially(cp, { delay: 150 });
+
+    // Sécurité si la saisie est incomplète
+    if (await this.champSaisieCP.inputValue() !== cp) {
+        await this.champSaisieCP.fill(cp);
+    }
+
+    await this.page.waitForTimeout(1000);
+    await this.page.keyboard.press('ArrowDown');
   }
 
   async sélectionnerAuchanDriveCambrai() {
-    const suggestion = this.page.locator('ul[role="listbox"] li, .journey__search-results-list-item').first();
-    await suggestion.waitFor({ state: 'visible', timeout: 8000 });
+    const suggestion = this.page.locator('li').filter({ hasText: /Cambrai/i }).first();
+    await suggestion.waitFor({ state: 'visible', timeout: 15000 });
     await suggestion.click();
 
-    await this.boutonAuchanDriveCambrai.waitFor({ state: 'visible', timeout: 10000 });
+    await this.boutonAuchanDriveCambrai.waitFor({ state: 'visible' });
     await this.boutonAuchanDriveCambrai.click();
-
-    // On attend que la confirmation apparaisse PUIS disparaisse (le tunnel se ferme)
-    await expect(this.texteVosCourses).toBeVisible({ timeout: 10000 });
-    await expect(this.texteVosCourses).toBeHidden({ timeout: 10000 });
     
-    // On vérifie que le header s'est mis à jour avec le bon magasin
-    await expect(this.texteAuchanDrive).toBeVisible({ timeout: 10000 });
+    await expect(this.contexteHeaderDrive).toHaveText(/Auchan Drive Cambrai/i, { timeout: 15000 });
   }
 
   async rechercherUnProduit(produit: string) {
     await this.inputRechercherProduit.waitFor({ state: 'visible' });
     await this.inputRechercherProduit.fill(produit);
-    
-    // Attendre que la suggestion spécifique soit visible
-    // Utiliser .first() pour éviter l'erreur de "strict mode violation" si plusieurs catégories matchent
     await this.rechercheSugestionCategorie.waitFor({ state: 'visible', timeout: 10000 });
     await this.rechercheSugestionCategorie.click();
+  }
+
+  async ajouterAuPanierSpecifiqueBio() {
+    // Ciblage par la "Carte Produit" pour être ultra-précis
+    const carteProduit = this.page.locator('article, .product-item, .pwa-product-tile')
+      .filter({ hasText: /BIO/i })
+      .filter({ hasText: /6x1l/i })
+      .first();
+
+    await carteProduit.waitFor({ state: 'visible', timeout: 15000 });
+    
+    const boutonAjouter = carteProduit.locator('button').filter({ hasText: /Ajouter/i });
+    await boutonAjouter.scrollIntoViewIfNeeded();
+    await boutonAjouter.click();
+    
+    console.log(`🛒 Clic sur "Ajouter" pour le produit BIO.`);
   }
 }
