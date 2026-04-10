@@ -7,3 +7,5 @@ Architecture : Mentionne que tu utilises le Page Object Model (POM).
 Installation : npm install
 
 Lancement : npx playwright test
+
+[![Playwright Tests](https://github.com/tubianaseverine-rgb/playwright-auchan-automation/actions/workflows/playwright.yml/badge.svg)](https://github.com/tubianaseverine-rgb/playwright-auchan-automation/actions/workflows/playwright.yml)
