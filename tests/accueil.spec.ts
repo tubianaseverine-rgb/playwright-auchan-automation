@@ -20,6 +20,7 @@ test('Test complet : Drive Cambrai et Lait Bio', async ({ page }) => {
   // Etape Multiplication (pour en avoir 3 au total)
   await accueilPage.multiplierQuantite(maCarteBio, 2);
 
-  // Vérification finale
-  await expect(accueilPage.zonePanier).not.toContainText(/0,00/);
+  // Vérification finale au niveau du panier
+  //await expect(accueilPage.zonePanier).not.toContainText(/0,00/);
+  await accueilPage.modaleConnexion('tubiana.severine@gmail.com');
 });

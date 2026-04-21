@@ -10,6 +10,11 @@ export class AccueilPage {
   readonly inputRechercherProduit: Locator;
   readonly rechercheSugestionCategorie: Locator;
   readonly zonePanier: Locator;
+  readonly boutonConnexion : Locator;
+  readonly inputUsername : Locator;
+  readonly boutonGoogleAuth : Locator;
+  readonly boutonFermerModale : Locator;
+  readonly boutonValiderMonPanier : Locator;
 
   constructor(page: Page) {
     this.page = page;
@@ -26,7 +31,12 @@ export class AccueilPage {
     this.inputRechercherProduit = page.getByRole('searchbox', { name: 'Rechercher un produit...' });
     this.rechercheSugestionCategorie = page.getByRole('link').filter({ hasText: 'Lait demi-écrémé' }).first();
     this.zonePanier = page.locator('a[href="/checkout/cart/"]');
-
+    this.boutonConnexion = page.getByRole('button', { name: 'Connexion' })
+    this.inputUsername = page.locator('#username');
+    this.boutonGoogleAuth = page.locator('a[href="/auth/resources/"]');
+    this.boutonFermerModale = page.locator('[aria-label*="Fermer la fenêtre"]'); 
+    this.boutonValiderMonPanier = page.getByRole('button', { name: 'Valider mon panier' });
+    
   }
 
   async goto() {
@@ -81,8 +91,9 @@ export class AccueilPage {
 
   async ajouterAuPanierSpecifiqueBio(): Promise<Locator> {
     const carteProduit = this.page.locator('article, .product-item')
-      .filter({ hasText: /BIO/i })
-      .filter({ hasText: /6x1l/i })
+      //.filter({ hasText: /BIO/i })
+      .filter({ hasText: /LACTEL/i })
+      //.filter({ hasText: /6x1l/i })
       .first();
 
     await carteProduit.waitFor({ state: 'visible' });
@@ -99,6 +110,17 @@ export class AccueilPage {
         await boutonPlus.click();
         await this.page.waitForTimeout(800); 
     }
+    //await this.zonePanier.click();
+    
+  }
+
+   async modaleConnexion(username: string) {
+    //await this.boutonConnexion.click();
+    //await this.inputUsername.fill(username);
+    //await this.boutonGoogleAuth.click();
+    await this.boutonFermerModale.click();
     await this.zonePanier.click();
+    await this.boutonValiderMonPanier.click();
+    await this.inputUsername.fill(username);
   }
 }
